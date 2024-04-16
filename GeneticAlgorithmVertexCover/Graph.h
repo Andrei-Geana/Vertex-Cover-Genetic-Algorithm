@@ -27,7 +27,7 @@ public:
         arches.insert(Arch{ from, to });
     }
 
-    bool IsSolution(const Individual& individ)
+    bool IsSolution(const Individual& individ) const
     {
         if (individ.GetNumberOfChromosomes() != nodes.size())
             throw std::exception("vector size not equal to number of nodes in graph");
@@ -44,7 +44,7 @@ public:
         return true;
     }
 
-    int GetNumberOfNotVerifiedArch(const Individual& individ)
+    int GetNumberOfNotVerifiedArch(const Individual& individ) const
     {
         int count{ 0 };
         for (const Arch& arc : arches)
@@ -64,6 +64,11 @@ public:
         {
             std::cout << elem.From() << "," << elem.To() << std::endl;
         }
+    }
+
+    int GetNumberOfArches() const
+    {
+        return (int)arches.size();
     }
 
 private:

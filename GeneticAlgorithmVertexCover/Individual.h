@@ -8,6 +8,8 @@
 class Individual
 {
 public:
+    Individual() {/*EMPTY*/ }
+
     Individual(const std::vector<bool>& chromosomes)
     {
         this->genes = chromosomes;

@@ -1,4 +1,5 @@
 #include "Graph.h"
+
 //vertex cover
 /*
 * -salvez muchiile intr-un unordered_set care va contine perechile de noduri intre care exista muchie (x1,x2)
@@ -24,139 +25,188 @@ static int GetRandomIndex(int min, int max)
     return distrib(gen);
 }
 
+static bool ShouldChange()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 2);
+    return distrib(gen) % 2;
+}
+
+static Individual GetPerson(int n = NodesNumber)
+{
+    std::vector<bool> genes(n, false);
+    for (size_t i{ 0u }; i < NodesNumber; ++i)
+    {
+        if (ShouldChange())
+            genes[i] = !genes[i];
+    }
+    return Individual{ genes };
+}
+
+
+typedef  std::unordered_multiset<Individual, Individual::Hash, Individual::IsEqual> ListOfIndividuals;
+
 class VertexCoverGeneticAlgorithm
 {
 public:
 
-    VertexCoverGeneticAlgorithm(Graph base)
+    VertexCoverGeneticAlgorithm(Graph& base, ListOfIndividuals&& population)
     {
         baseGraph = base;
+        this->population = population;
     }
 
-    /*bool IsSolution(const std::vector<bool>& solutionToBeChecked)
+    static ListOfIndividuals GetPopulation(int numberOfPeople = PopulationSize)
     {
-        return baseGraph.IsSolution(solutionToBeChecked);
-    }*/
+        ListOfIndividuals population;
+        while (population.size() < numberOfPeople)
+        {
+            auto person = GetPerson();
 
-    double GetFitnessScore(const Individual& individual)
-    {
-        return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual);
+            population.insert(person);
+
+            //Debugging
+            
+            for (size_t index{ 0u }; index < person.GetNumberOfChromosomes(); ++index)
+                std::cout << std::boolalpha << person[index] << " ";
+            std::cout << population.size() << std::endl;
+            
+        }
+
+        return population;
     }
 
-    void RunAlgorithm(std::vector<std::vector<bool>>& population)
+    //best fitness = smallest (min)
+    double GetFitnessScore(const Individual& individual) const
+    {
+        double fitnessScore = individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
+        return fitnessScore;
+        //return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + baseGraph.GetNumberOfArches() + (!baseGraph.IsSolution(individual)*LambdaFitness);
+    }
+
+    void RunAlgorithm()
     {
         size_t indexOfIteration{ 0u };
         while (indexOfIteration < NumberOfIterations)
         {
             indexOfIteration++;
-            MakeOneIteration(population);
+            MakeOneIteration();
         }
         //return best person
     }
 
 private:
-    void MakeOneIteration(std::vector<std::vector<bool>>& population)
+    void MakeOneIteration()
     {
-        std::vector<std::vector<std::vector<bool>>> groups;
-        while (groups.size() != (PopulationSize / TourneySize))
+        std::vector<ListOfIndividuals> groups;
+        while (groups.size() != PopulationSize)
         {
-            groups.emplace_back(GetGroup(population));
+            groups.emplace_back(GetGroup());
         }
-        std::vector<std::vector<bool>> winners;
+        ListOfIndividuals winners;
         for (const auto& group : groups)
         {
-            winners.emplace_back(GetBestPersonInGroup(group));
+            winners.insert(GetBestPersonInGroup(group));
         }
-        std::vector<std::vector<bool>> newPopulation;
+        int index = 0;
+        for (const auto& winner : winners)
+        {
+            std::cout << index++ << ": " << GetFitnessScore(winner) << '\n';
+        }
+
+        ListOfIndividuals newPopulation;
+        //get new members and delete old ones
         for (size_t index{ 0u }; index < winners.size() - 1; index += 2u)
         {
             ;
         }
     }
 
-    std::vector<std::vector<bool>> GetGroup(std::vector<std::vector<bool>>& population)
+    ListOfIndividuals GetGroup()
     {
-        std::vector<std::vector<bool>> group;
+        ListOfIndividuals group;
         while (group.size() < TourneySize)
         {
-            auto person = GetRandomPerson(population);
-            //daca nu e deja aici
-            group.emplace_back(person);
+            auto person = GetRandomPerson();
+            group.insert(person);
         }
         return group;
     }
     
-    std::vector<bool> GetRandomPerson(std::vector<std::vector<bool>>& population)
+    Individual GetRandomPerson()
     {
         int index{ GetRandomIndex(0, (int)population.size() - 1) };
-        return population[index];
+        size_t count{ 0u };
+        for (auto it = population.begin(); it != population.end(); ++it) {
+            if (count == index) {
+                return *it;
+            }
+            count++;
+        }
     }
 
-    std::vector<bool> GetBestPersonInGroup(const std::vector<std::vector<bool>>& group)
+    Individual GetBestPersonInGroup(const ListOfIndividuals& group) const
     {
-        auto person = group[0];
-        for (size_t index{ 1 }; index < group.size(); ++index)
+        double bestFitnessScore{ INT_MAX };
+        Individual winner;
+        for (const auto& individual : group)
         {
-            if (GetFitnessScore(group[index]) > GetFitnessScore(person))
-                person = group[index];
+            if (double score{ GetFitnessScore(individual) }; score < bestFitnessScore)
+            {
+                winner = individual;
+                bestFitnessScore = score;
+            }
         }
-        return person;
+        return winner;
     }
 
 private:
     Graph baseGraph;
-
-    std::unordered_set<Individual, Individual::Hash, Individual::IsEqual> population;
+    ListOfIndividuals population;
 };
 
-static bool ShouldChange()
+void TestFor10Nodes(const VertexCoverGeneticAlgorithm& algorithm)
 {
-    std::random_device rd; 
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 2);
-    return distrib(gen) % 2;
+    std::cout << "BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, false, false, false, false, false, false} }) << std::endl;
+    std::cout << "SECOND BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, true, false, false, false, false, false, false, false} }) << std::endl;
+    std::cout << "THIRD BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, true, false, false, false, false, false} }) << std::endl;
+    std::cout << "NO GOOD : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, false, false, false, false, false, false, false, false, false} }) << std::endl;
 }
 
-static std::vector<bool> GetPerson(int n = NodesNumber)
+void TestFor5Nodes(const VertexCoverGeneticAlgorithm& algorithm)
 {
-    std::vector<bool> guy(n, false);
-    for (size_t i{ 0u }; i < NodesNumber; ++i)
-    {
-        if (ShouldChange())
-            guy[i] = !guy[i];
-    }
-    return guy;
-}
-
-static std::vector<std::vector<bool>> GetPopulation(int numberOfPeople = PopulationSize)
-{
-    std::vector<std::vector<bool>> population;
-    while(population.size() < numberOfPeople)
-    {
-        auto person = GetPerson();
-        //Sa elimin indivizii care se repeta?
-        population.emplace_back(person);
-    }
-
-    return population;
+    std::cout << "BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, false} }) << std::endl;
+    std::cout << "SECOND BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, true, false, false} }) << std::endl;
+    std::cout << "THIRD BEST : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, true} }) << std::endl;
+    std::cout << "NO GOOD : \n";
+    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, false, false, false, false} }) << std::endl;
 }
 
 int main()
 {
-    Graph a{ 5 };
+    Graph a{ NodesNumber };
     try {
         a.AddArch(1, 2);
     }
     catch (std::exception a) {
         std::cout << a.what() << std::endl;
     }
-    VertexCoverGeneticAlgorithm algorithm{ a };
-    auto population = GetPopulation();
-    try {
+    VertexCoverGeneticAlgorithm algorithm{ a, VertexCoverGeneticAlgorithm::GetPopulation() };
+    //TestFor5Nodes(algorithm);
+    algorithm.RunAlgorithm();
+    /*try {
         std::cout << std::boolalpha << a.IsSolution(std::vector<bool>{true,true,false,false,false});
     }
     catch (std::exception a) {
         std::cout << a.what() << std::endl;
-    }
+    }*/
     return 0;
 }
