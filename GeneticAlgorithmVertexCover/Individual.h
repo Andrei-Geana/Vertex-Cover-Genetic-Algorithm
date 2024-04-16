@@ -53,14 +53,23 @@ public:
     {
         for (size_t index{ 0u }; index < genes.size(); ++index)
         {
-            if (GetMutationChance() < MutationRate)
+            if (GetChance() < MutationRate)
                 genes[index] = !genes[index];
         }
     }
 
 public:
 
-    static double GetMutationChance(double min = 0.0005, double max = 0.1)
+    friend std::ostream& operator<<(std::ostream& out, const Individual& individ) 
+    {
+        for (const auto& chromosome : individ.genes)
+        {
+            out << chromosome << ' ';
+        }
+        return out;
+    }
+
+    static double GetChance(double min = 0.0001, double max = 1)
     {
         std::random_device rd;
         std::mt19937 gen(rd());
