@@ -18,5 +18,22 @@
     <ClCompile Include="GeneticAlgorithmVertexCover.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Individual.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Individual.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AlgorithmData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Arch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

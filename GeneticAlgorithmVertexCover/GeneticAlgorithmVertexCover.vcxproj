@@ -129,6 +129,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GeneticAlgorithmVertexCover.cpp" />
+    <ClCompile Include="Individual.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AlgorithmData.h" />
+    <ClInclude Include="Arch.h" />
+    <ClInclude Include="Graph.h" />
+    <ClInclude Include="Individual.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
