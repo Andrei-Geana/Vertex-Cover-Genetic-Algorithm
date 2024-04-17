@@ -138,6 +138,9 @@
     <ClInclude Include="Individual.h" />
     <ClInclude Include="VertexCoverGeneticAlgorithm.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="intrare.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,5 +1,5 @@
 #include "Graph.h"
-
+#include <fstream>
 //vertex cover
 /*
 * -salvez muchiile intr-un unordered_set care va contine perechile de noduri intre care exista muchie (x1,x2)
@@ -93,17 +93,23 @@ public:
 
     void RunAlgorithm()
     {
+        ShowPopulation();
+
         size_t indexOfIteration{ 0u };
         while (indexOfIteration < NumberOfIterations)
         {
-            //ShowPopulation();
+           // ShowPopulation();
             MakeOneIteration();
             indexOfIteration++;
             auto individ = GetBestPersonInGroup(population);
-            std::cout << indexOfIteration <<":BEST: " << individ << " SCORE: " << GetFitnessScore(individ) << std::endl;
+            std::cout << indexOfIteration << ":BEST: " << individ << " SCORE: " << GetFitnessScore(individ) << " " << baseGraph.IsSolution(individ) << std::endl;
 
         }
-        std::cout << "FINISHED";
+        std::cout << "FINISHED\n";
+
+        //best result for example in file
+        /*auto best = std::vector<bool>{ 0,1,0,1,0,1,1,0,1,0,1,1 };
+        std::cout << std::boolalpha<< baseGraph.IsSolution(best) <<" SCORE: "<< GetFitnessScore(best);*/
     }
 
 
@@ -219,15 +225,18 @@ private:
         std::vector<bool> chromosomesForFirstChild(parent1.GetNumberOfChromosomes());
         std::vector<bool> chromosomesForSecondChild(parent1.GetNumberOfChromosomes());
 
-        for (size_t index{ 0u }; index < point; ++index)
+        size_t index{ 0u };
+        for (; index < point; ++index)
+        {
             chromosomesForFirstChild[index] = parent1[index];
-        for (size_t index{ 0u }; index < point; ++index)
             chromosomesForSecondChild[index] = parent2[index];
+        }
 
-        for (size_t index{ point }; index < parent1.GetNumberOfChromosomes(); ++index)
+        for (index = point; index < parent1.GetNumberOfChromosomes(); ++index)
+        {
             chromosomesForFirstChild[index] = parent2[index];
-        for (size_t index{ point }; index < parent1.GetNumberOfChromosomes(); ++index)
             chromosomesForSecondChild[index] = parent1[index];
+        }
 
         Individual child1{ chromosomesForFirstChild };
         Individual child2{ chromosomesForSecondChild };
@@ -263,10 +272,27 @@ void TestFor5Nodes(const VertexCoverGeneticAlgorithm& algorithm)
     std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, false, false, false, false} }) << std::endl;
 }
 
+Graph ReadGraphFromFile()
+{
+    std::ifstream fin{ "intrare.txt" };
+    fin >> NodesNumber;
+    //only for small number of chromosomes
+    //PopulationSize = (int)std::pow(2, NodesNumber);
+    Graph graph{ NodesNumber };
+    int from{}, to{};
+    while (fin >> from >> to)
+    {
+        graph.AddArch(from, to);
+    }
+    fin.close();
+    return graph;
+
+}
+
 int main()
 {
-    Graph a{ NodesNumber };
-    try {
+    Graph a{ ReadGraphFromFile()};
+    /*try {
         a.AddArch(0, 1);
         a.AddArch(0, 2);
         a.AddArch(1, 3);
@@ -278,7 +304,7 @@ int main()
     }
     catch (std::exception a) {
         std::cout << a.what() << std::endl;
-    }
+    }*/
     VertexCoverGeneticAlgorithm algorithm{ a, VertexCoverGeneticAlgorithm::GetPopulation() };
     //TestFor5Nodes(algorithm);
     algorithm.RunAlgorithm();
