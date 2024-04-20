@@ -69,7 +69,7 @@ public:
         return out;
     }
 
-    static double GetChance(double min = 0.0001, double max = 1)
+    static double GetChance(double min = 0, double max = 1)
     {
         std::random_device rd;
         std::mt19937 gen(rd());

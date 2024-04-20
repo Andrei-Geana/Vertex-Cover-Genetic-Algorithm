@@ -1,5 +1,6 @@
 #include "Graph.h"
 #include <fstream>
+#include <chrono>
 //vertex cover
 /*
 * -salvez muchiile intr-un unordered_set care va contine perechile de noduri intre care exista muchie (x1,x2)
@@ -57,6 +58,7 @@ public:
         this->population = population;
     }
 
+    //basic GetPopulation
     static ListOfIndividuals GetPopulation(int numberOfPeople = PopulationSize)
     {
         ListOfIndividuals population;
@@ -88,28 +90,35 @@ public:
     {
         double fitnessScore = individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
         return fitnessScore;
-        //return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + baseGraph.GetNumberOfArches() + (!baseGraph.IsSolution(individual)*LambdaFitness);
     }
 
     void RunAlgorithm()
     {
-        ShowPopulation();
+        std::cout << "---------------------------------------------------------------" << std::endl <<"EPOCHS: "<< std::endl;
+       // ShowPopulation();
+        auto individual = GetBestPersonInGroup(population);
+        std::cout << "\tI: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
+
+        auto startTime = std::chrono::high_resolution_clock::now();
 
         size_t indexOfIteration{ 0u };
         while (indexOfIteration < NumberOfIterations)
         {
-           // ShowPopulation();
             MakeOneIteration();
             indexOfIteration++;
-            auto individ = GetBestPersonInGroup(population);
-            std::cout << indexOfIteration << ":BEST: " << individ << " SCORE: " << GetFitnessScore(individ) << " " << baseGraph.IsSolution(individ) << std::endl;
-
+            individual = GetBestPersonInGroup(population);
+            std::cout << "\t";
+            if (indexOfIteration == NumberOfIterations)
+                std::cout << "E";
+            else
+                std::cout << indexOfIteration;
+            std::cout << ": Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
         }
-        std::cout << "FINISHED\n";
 
-        //best result for example in file
-        /*auto best = std::vector<bool>{ 0,1,0,1,0,1,1,0,1,0,1,1 };
-        std::cout << std::boolalpha<< baseGraph.IsSolution(best) <<" SCORE: "<< GetFitnessScore(best);*/
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
+        std::cout << "Time taken: " << duration << " milliseconds\n";
     }
 
 
@@ -133,52 +142,55 @@ private:
         {
             std::cout << index++ << ": " << GetFitnessScore(winner) << '\n';
         }*/
-
-        ListOfIndividuals selectedForCrossOver;
+        
+        //ListOfIndividuals => individuals have a bigger chance to crossover with an another individual which has the same score => converges faster
+        //vector => standard crossover => bigger diversity
+        std::vector<Individual> selectedForCrossOver;
 
         //select those that will participate in crossover
-        for (const auto& individ : newPopulation)
+        for (const auto& individual : newPopulation)
         {
             if (Individual::GetChance() < CrossOverParticipationRate)
             {
-                selectedForCrossOver.insert(individ);
+                selectedForCrossOver.emplace_back(individual);
             }
         }
+
         //get even number of individuals
         if (selectedForCrossOver.size() % 2 != 0)
         {
-            auto it = selectedForCrossOver.begin();
-            std::advance(it, selectedForCrossOver.size() - 1);
-            selectedForCrossOver.extract(it);
+            selectedForCrossOver.pop_back();
         }
 
         //make crossover and then try mutation
-        for (auto it = selectedForCrossOver.begin(); it!=selectedForCrossOver.end();)
+        for (size_t index{ 0u } ; index<selectedForCrossOver.size()-1; index+=2u)
         {
-            Individual parent1 = *it;
-            std::advance(it, 1);
-            Individual parent2 = *it;
-            auto [c1, c2] = Crossover(parent1, parent2);
-            c1.Mutate();
-            c2.Mutate();
+            Individual parent1 = selectedForCrossOver[index];
+            Individual parent2 = selectedForCrossOver[index+1];
+            auto [c1, c2] = TwoPointCrossover(parent1, parent2);
+            //c1.Mutate();
+            //c2.Mutate();
 
-            //Deletes all occurences
+            //deletes all occurences of parents
             /*newPopulation.erase(parent1);
             newPopulation.erase(parent2);*/
 
+            //deletes parents
             auto itOfParent1 = newPopulation.extract(parent1);
             auto itOfParent2 = newPopulation.extract(parent2);
 
             newPopulation.insert(c1);
             newPopulation.insert(c2);
-
-            if (it == std::prev(selectedForCrossOver.end())) {
-                break;
-            }
-
         }
 
-        population = newPopulation;
+        ListOfIndividuals resultPopulation;
+        for (auto individual : newPopulation)
+        {
+            individual.Mutate();
+            resultPopulation.insert(std::move(individual));
+        }
+
+        population = resultPopulation;
     }
 
     ListOfIndividuals GetGroup()
@@ -202,15 +214,17 @@ private:
             }
             count++;
         }
+        throw new std::exception("unable to select person");
     }
 
     Individual GetBestPersonInGroup(const ListOfIndividuals& group) const
     {
         double bestFitnessScore{ INT_MAX };
         Individual winner;
+        double score{ 0 };
         for (const auto& individual : group)
         {
-            if (double score{ GetFitnessScore(individual) }; score < bestFitnessScore)
+            if (score = GetFitnessScore(individual); score < bestFitnessScore)
             {
                 winner = individual;
                 bestFitnessScore = score;
@@ -219,11 +233,11 @@ private:
         return winner;
     }
 
-    std::pair<Individual, Individual> Crossover(const Individual& parent1, const Individual& parent2) const
+    std::pair<Individual, Individual> OnPointCrossover(const Individual& parent1, const Individual& parent2) const
     {
-        size_t point = (size_t)GetRandomIndex(0, parent1.GetNumberOfChromosomes() - 1);
-        std::vector<bool> chromosomesForFirstChild(parent1.GetNumberOfChromosomes());
-        std::vector<bool> chromosomesForSecondChild(parent1.GetNumberOfChromosomes());
+        size_t point = (size_t)GetRandomIndex(0, (int)parent1.GetNumberOfChromosomes() - 1);
+        std::vector<bool> chromosomesForFirstChild((int)parent1.GetNumberOfChromosomes());
+        std::vector<bool> chromosomesForSecondChild((int)parent1.GetNumberOfChromosomes());
 
         size_t index{ 0u };
         for (; index < point; ++index)
@@ -236,6 +250,61 @@ private:
         {
             chromosomesForFirstChild[index] = parent2[index];
             chromosomesForSecondChild[index] = parent1[index];
+        }
+
+        Individual child1{ chromosomesForFirstChild };
+        Individual child2{ chromosomesForSecondChild };
+        return std::make_pair(child1, child2);
+    }
+
+    std::pair<Individual, Individual> TwoPointCrossover(const Individual& parent1, const Individual& parent2) const
+    {
+        int numChromosomes{ (int)parent1.GetNumberOfChromosomes() };
+        size_t point1{ (size_t)GetRandomIndex(0, numChromosomes - 1) };
+        size_t point2{ (size_t)GetRandomIndex(0, numChromosomes - 1) };
+
+        if (point1 > point2) 
+        {
+            std::swap(point1, point2);
+        }
+
+        std::vector<bool> chromosomesForFirstChild(numChromosomes);
+        std::vector<bool> chromosomesForSecondChild(numChromosomes);
+
+        for (size_t index{ 0u }; index < numChromosomes; ++index)
+        {
+            if (index >= point1 && index <= point2) 
+            {
+                chromosomesForFirstChild[index] = parent1[index];
+                chromosomesForSecondChild[index] = parent2[index];
+            }
+            else 
+            {
+                chromosomesForFirstChild[index] = parent2[index];
+                chromosomesForSecondChild[index] = parent1[index];
+            }
+        }
+
+        Individual child1{ chromosomesForFirstChild };
+        Individual child2{ chromosomesForSecondChild };
+        return std::make_pair(child1, child2);
+    }
+
+    std::pair<Individual, Individual> UniformCrossover(const Individual& parent1, const Individual& parent2) const
+    {
+        std::vector<bool> chromosomesForFirstChild((int)parent1.GetNumberOfChromosomes());
+        std::vector<bool> chromosomesForSecondChild((int)parent1.GetNumberOfChromosomes());
+
+        for (size_t i = 0; i < parent1.GetNumberOfChromosomes(); ++i) 
+        {
+            if (Individual::GetChance() < 0.5) {
+                chromosomesForFirstChild[i] = parent1[i];
+                chromosomesForSecondChild[i] = parent2[i];
+            }
+            else {
+                chromosomesForFirstChild[i] = parent2[i];
+                chromosomesForSecondChild[i] = parent1[i];
+            }
         }
 
         Individual child1{ chromosomesForFirstChild };
@@ -289,25 +358,29 @@ Graph ReadGraphFromFile()
 
 }
 
+
 int main()
 {
     Graph a{ ReadGraphFromFile()};
-    /*try {
-        a.AddArch(0, 1);
-        a.AddArch(0, 2);
-        a.AddArch(1, 3);
-        a.AddArch(4, 3);
-        a.AddArch(4, 5);
-        a.AddArch(4, 6);
-        a.AddArch(5, 6);
-        a.AddArch(2, 6);
-    }
-    catch (std::exception a) {
-        std::cout << a.what() << std::endl;
-    }*/
-    VertexCoverGeneticAlgorithm algorithm{ a, VertexCoverGeneticAlgorithm::GetPopulation() };
-    //TestFor5Nodes(algorithm);
+    auto basePopulation = VertexCoverGeneticAlgorithm::GetPopulation();
+
+
+    auto pop = basePopulation;
+    VertexCoverGeneticAlgorithm algorithm{ a, std::move(pop)};
     algorithm.RunAlgorithm();
+
+    for (size_t _{ 0u }; _ < NumberOfRuns-1; ++_)
+    {
+        std::cout << std::endl;
+        pop = basePopulation;
+        VertexCoverGeneticAlgorithm algo{ a, std::move(pop) };
+        algo.RunAlgorithm();
+    }
+
+
+
+
+    //TestFor5Nodes(algorithm);
     /*try {
         std::cout << std::boolalpha << a.IsSolution(std::vector<bool>{true,true,false,false,false});
     }
