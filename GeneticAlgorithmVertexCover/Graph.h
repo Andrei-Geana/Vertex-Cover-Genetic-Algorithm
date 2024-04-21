@@ -20,9 +20,9 @@ public:
     void AddArch(int from, int to)
     {
         if (!nodes.contains(from))
-            throw new std::exception("start node not in graph");
+            throw std::exception("start node not in graph");
         if (!nodes.contains(to))
-            throw new std::exception("destination node not in graph");
+            throw std::exception("destination node not in graph");
 
         arches.insert(Arch{ from, to });
     }

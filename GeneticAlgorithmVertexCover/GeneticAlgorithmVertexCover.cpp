@@ -56,9 +56,19 @@ class VertexCoverGeneticAlgorithm
 {
 public:
 
-    VertexCoverGeneticAlgorithm(Graph& base, ListOfIndividuals&& population)
+    VertexCoverGeneticAlgorithm(const Graph& base, ListOfIndividuals&& population)
     {
         baseGraph = base;
+        this->population = std::move(population);
+    }
+
+    VertexCoverGeneticAlgorithm(const Graph& base)
+    {
+        baseGraph = base;
+    }
+
+    void SetPopulation(ListOfIndividuals&& population)
+    {
         this->population = std::move(population);
     }
 
@@ -90,8 +100,7 @@ public:
     //best fitness = smallest (min)
     double GetFitnessScore(const Individual& individual) const
     {
-        double fitnessScore = individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
-        return fitnessScore;
+        return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
     }
 
     void RunAlgorithm()
@@ -109,18 +118,21 @@ public:
             MakeOneIteration();
             indexOfIteration++;
             //ShowPopulation();
-            individual = GetBestPersonInGroup(population);
+            /*individual = GetBestPersonInGroup(population);
             std::cout << "\t";
             if (indexOfIteration == NumberOfIterations)
                 std::cout << "E";
             else
                 std::cout << indexOfIteration;
-            std::cout << ": Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
+            std::cout << ": Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;*/
         }
 
         auto endTime = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
         //ShowPopulation();
+        individual = GetBestPersonInGroup(population);
+        std::cout << "\t";
+        std::cout << "E: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
         std::cout << "Time taken: " << duration << " milliseconds\n";
     }
 
@@ -129,10 +141,14 @@ private:
     void MakeOneIteration()
     {
         std::vector<ListOfIndividuals> groups;
+
+        //Get tournaments
         while (groups.size() != PopulationSize)
         {
             groups.emplace_back(GetGroup());
         }
+
+        //Put in new population winners of tournaments
         ListOfIndividuals newPopulation;
         for (const auto& group : groups)
         {
@@ -166,7 +182,7 @@ private:
             selectedForCrossOver.pop_back();
         }
 
-        //make crossover and then try mutation
+        //make crossover
         for (size_t index{ 0u } ; index<selectedForCrossOver.size()-1; index+=2u)
         {
             auto [c1, c2] = TwoPointCrossover(*selectedForCrossOver[index], *selectedForCrossOver[index + 1]);
@@ -175,9 +191,10 @@ private:
             *selectedForCrossOver[index + 1] = c2;
         }
 
-        for (auto& individuaL : newPopulation)
+        //mutation of new population
+        for (auto& individual : newPopulation)
         {
-            individuaL.Mutate();
+            individual.Mutate();
         }
 
         population = newPopulation;
@@ -290,41 +307,22 @@ private:
     ListOfIndividuals population;
 };
 
-void TestFor10Nodes(const VertexCoverGeneticAlgorithm& algorithm)
-{
-    std::cout << "BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, false, false, false, false, false, false} }) << std::endl;
-    std::cout << "SECOND BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, true, false, false, false, false, false, false, false} }) << std::endl;
-    std::cout << "THIRD BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, true, false, false, false, false, false} }) << std::endl;
-    std::cout << "NO GOOD : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, false, false, false, false, false, false, false, false, false} }) << std::endl;
-}
-
-void TestFor5Nodes(const VertexCoverGeneticAlgorithm& algorithm)
-{
-    std::cout << "BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, false} }) << std::endl;
-    std::cout << "SECOND BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, true, false, false} }) << std::endl;
-    std::cout << "THIRD BEST : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, true, false, false, true} }) << std::endl;
-    std::cout << "NO GOOD : \n";
-    std::cout << algorithm.GetFitnessScore(Individual{ std::vector<bool>{false, false, false, false, false} }) << std::endl;
-}
-
 Graph ReadGraphFromFile()
 {
-    std::ifstream fin{ "intrare.txt" };
+    std::ifstream fin{ FilePathToGraph };
     fin >> NodesNumber;
-    //only for small number of chromosomes
-    //PopulationSize = (int)std::pow(2, NodesNumber);
     Graph graph{ NodesNumber };
     int from{}, to{};
     while (fin >> from >> to)
     {
-        graph.AddArch(from, to);
+        try 
+        {
+            graph.AddArch(from, to);
+        }
+        catch (std::exception ex)
+        {
+            std::cout << ex.what() << " for arch: (" << from << ", " << to << ")" << std::endl;
+        }
     }
     fin.close();
     return graph;
@@ -335,18 +333,17 @@ Graph ReadGraphFromFile()
 int main()
 {
     Graph a{ ReadGraphFromFile()};
-    auto basePopulation = VertexCoverGeneticAlgorithm::GetPopulation();
+    VertexCoverGeneticAlgorithm algo{ a };
 
+    ListOfIndividuals basePopulation{ VertexCoverGeneticAlgorithm::GetPopulation() };
 
-    auto pop = basePopulation;
-    VertexCoverGeneticAlgorithm algorithm{ a, std::move(pop)};
-    algorithm.RunAlgorithm();
+    ListOfIndividuals pop;
 
-    for (size_t _{ 0u }; _ < NumberOfRuns-1; ++_)
+    for (size_t _{ 0u }; _ < NumberOfRuns; ++_)
     {
         std::cout << std::endl;
         pop = basePopulation;
-        VertexCoverGeneticAlgorithm algo{ a, std::move(pop) };
+        algo.SetPopulation(std::move(pop));
         algo.RunAlgorithm();
     }
 

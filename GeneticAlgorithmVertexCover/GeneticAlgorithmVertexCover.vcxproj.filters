@@ -43,5 +43,8 @@
     <Text Include="intrare.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="iesire.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
