@@ -1,6 +1,7 @@
 #include "Graph.h"
 #include "Individual.h"
 #include <fstream>
+#include <map>
 #include <chrono>
 //vertex cover
 /*
@@ -103,7 +104,7 @@ public:
         return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
     }
 
-    void RunAlgorithm()
+    Individual RunAlgorithm()
     {
         std::cout << "---------------------------------------------------------------" << std::endl <<"EPOCHS: "<< std::endl;
         //ShowPopulation();
@@ -134,6 +135,7 @@ public:
         std::cout << "\t";
         std::cout << "E: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
         std::cout << "Time taken: " << duration << " milliseconds\n";
+        return individual;
     }
 
 
@@ -329,6 +331,16 @@ Graph ReadGraphFromFile()
 
 }
 
+void WriteResultsToFile(const std::map<int,int>& results)
+{
+    std::ofstream out{ FilePathToResults };
+    for (const auto& element : results)
+    {
+        out << "SCORE:" << element.first << " => " << "PERCENTAGE: " << element.second << "%" << std::endl;
+    }
+    out.close();
+
+}
 
 int main()
 {
@@ -339,14 +351,19 @@ int main()
 
     ListOfIndividuals pop;
 
+    //score, numberOfIndividualsWithScore
+    std::map<int, int> results;
+
+    Individual individual;
     for (size_t _{ 0u }; _ < NumberOfRuns; ++_)
     {
         std::cout << std::endl;
         pop = basePopulation;
         algo.SetPopulation(std::move(pop));
-        algo.RunAlgorithm();
+        individual = algo.RunAlgorithm();
+        results[algo.GetFitnessScore(individual)]++;
     }
-
+    WriteResultsToFile(results);
 
 
 

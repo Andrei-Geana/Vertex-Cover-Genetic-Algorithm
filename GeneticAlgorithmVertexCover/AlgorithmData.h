@@ -10,6 +10,7 @@ const double CrossOverParticipationRate = 0.5;
 const size_t NumberOfRuns = 100;
 
 const std::string FilePathToGraph{ "intrare.txt" };
+const std::string FilePathToResults{ "iesire.txt" };
 //best data values
 /*
 
