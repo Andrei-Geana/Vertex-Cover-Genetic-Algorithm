@@ -1,9 +1,9 @@
 int NodesNumber;
-int PopulationSize = 200;
+int PopulationSize = 100;
 const int NumberOfIterations = 10;
 const double LambdaFitness = 5;
 const int NotSolutionPenalty = 10;
-const int TourneySize = 2;
+const int TourneySize = 6;
 const int PopulationAfterSelection = PopulationSize;
 const double MutationRate = 0.01;
 const double CrossOverParticipationRate = 0.5;

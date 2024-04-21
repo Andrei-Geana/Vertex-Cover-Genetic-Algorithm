@@ -1,4 +1,5 @@
 #include "Graph.h"
+#include "Individual.h"
 #include <fstream>
 #include <chrono>
 //vertex cover
@@ -17,6 +18,7 @@
 * -incerc sa fac mutatie pe copii
 * -copiii lui x1 cu x2 ii inlocuiesc pe acestia
 */
+
 
 static int GetRandomIndex(int min, int max)
 {
@@ -46,7 +48,9 @@ static Individual GetPerson(int n = NodesNumber)
 }
 
 
-typedef  std::unordered_multiset<Individual, Individual::Hash, Individual::IsEqual> ListOfIndividuals;
+//typedef  std::unordered_multiset<Individual, Individual::Hash, Individual::IsEqual> ListOfIndividuals;
+typedef std::vector<Individual> ListOfIndividuals;
+
 
 class VertexCoverGeneticAlgorithm
 {
@@ -55,7 +59,7 @@ public:
     VertexCoverGeneticAlgorithm(Graph& base, ListOfIndividuals&& population)
     {
         baseGraph = base;
-        this->population = population;
+        this->population = std::move(population);
     }
 
     //basic GetPopulation
@@ -64,9 +68,7 @@ public:
         ListOfIndividuals population;
         while (population.size() < numberOfPeople)
         {
-            auto person = GetPerson();
-
-            population.insert(person);
+            population.emplace_back(GetPerson());
 
             //Debugging
             
@@ -95,7 +97,7 @@ public:
     void RunAlgorithm()
     {
         std::cout << "---------------------------------------------------------------" << std::endl <<"EPOCHS: "<< std::endl;
-       // ShowPopulation();
+        //ShowPopulation();
         auto individual = GetBestPersonInGroup(population);
         std::cout << "\tI: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
 
@@ -106,6 +108,7 @@ public:
         {
             MakeOneIteration();
             indexOfIteration++;
+            //ShowPopulation();
             individual = GetBestPersonInGroup(population);
             std::cout << "\t";
             if (indexOfIteration == NumberOfIterations)
@@ -117,7 +120,7 @@ public:
 
         auto endTime = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-
+        //ShowPopulation();
         std::cout << "Time taken: " << duration << " milliseconds\n";
     }
 
@@ -133,7 +136,7 @@ private:
         ListOfIndividuals newPopulation;
         for (const auto& group : groups)
         {
-            newPopulation.insert(GetBestPersonInGroup(group));
+            newPopulation.emplace_back(GetBestPersonInGroup(group));
         }
 
         //DEBUGGING
@@ -143,16 +146,17 @@ private:
             std::cout << index++ << ": " << GetFitnessScore(winner) << '\n';
         }*/
         
+
         //ListOfIndividuals => individuals have a bigger chance to crossover with an another individual which has the same score => converges faster
         //vector => standard crossover => bigger diversity
-        std::vector<Individual> selectedForCrossOver;
+        std::vector<Individual*> selectedForCrossOver;
 
         //select those that will participate in crossover
-        for (const auto& individual : newPopulation)
+        for (auto& individual : newPopulation)
         {
             if (Individual::GetChance() < CrossOverParticipationRate)
             {
-                selectedForCrossOver.emplace_back(individual);
+                selectedForCrossOver.emplace_back(&individual);
             }
         }
 
@@ -165,32 +169,18 @@ private:
         //make crossover and then try mutation
         for (size_t index{ 0u } ; index<selectedForCrossOver.size()-1; index+=2u)
         {
-            Individual parent1 = selectedForCrossOver[index];
-            Individual parent2 = selectedForCrossOver[index+1];
-            auto [c1, c2] = TwoPointCrossover(parent1, parent2);
-            //c1.Mutate();
-            //c2.Mutate();
+            auto [c1, c2] = TwoPointCrossover(*selectedForCrossOver[index], *selectedForCrossOver[index + 1]);
 
-            //deletes all occurences of parents
-            /*newPopulation.erase(parent1);
-            newPopulation.erase(parent2);*/
-
-            //deletes parents
-            auto itOfParent1 = newPopulation.extract(parent1);
-            auto itOfParent2 = newPopulation.extract(parent2);
-
-            newPopulation.insert(c1);
-            newPopulation.insert(c2);
+            *selectedForCrossOver[index] = c1;
+            *selectedForCrossOver[index + 1] = c2;
         }
 
-        ListOfIndividuals resultPopulation;
-        for (auto individual : newPopulation)
+        for (auto& individuaL : newPopulation)
         {
-            individual.Mutate();
-            resultPopulation.insert(std::move(individual));
+            individuaL.Mutate();
         }
 
-        population = resultPopulation;
+        population = newPopulation;
     }
 
     ListOfIndividuals GetGroup()
@@ -198,39 +188,22 @@ private:
         ListOfIndividuals group;
         while (group.size() < TourneySize)
         {
-            auto person = GetRandomPerson();
-            group.insert(person);
+            group.emplace_back(GetRandomPerson());
         }
         return group;
     }
     
     Individual GetRandomPerson()
     {
-        int index{ GetRandomIndex(0, (int)population.size() - 1) };
-        size_t count{ 0u };
-        for (auto it = population.begin(); it != population.end(); ++it) {
-            if (count == index) {
-                return *it;
-            }
-            count++;
-        }
-        throw new std::exception("unable to select person");
+        return population[GetRandomIndex(0, (int)population.size() - 1)];
     }
 
     Individual GetBestPersonInGroup(const ListOfIndividuals& group) const
     {
-        double bestFitnessScore{ INT_MAX };
-        Individual winner;
-        double score{ 0 };
-        for (const auto& individual : group)
-        {
-            if (score = GetFitnessScore(individual); score < bestFitnessScore)
-            {
-                winner = individual;
-                bestFitnessScore = score;
-            }
-        }
-        return winner;
+        return *(std::min_element(group.begin(), group.end(),
+            [this](const Individual& ind1, const Individual& ind2) {
+                return GetFitnessScore(ind1) < GetFitnessScore(ind2);
+            }));
     }
 
     std::pair<Individual, Individual> OnPointCrossover(const Individual& parent1, const Individual& parent2) const

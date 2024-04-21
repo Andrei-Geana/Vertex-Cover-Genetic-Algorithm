@@ -54,7 +54,9 @@ public:
         for (size_t index{ 0u }; index < genes.size(); ++index)
         {
             if (GetChance() < MutationRate)
+            {
                 genes[index] = !genes[index];
+            }
         }
     }
 
