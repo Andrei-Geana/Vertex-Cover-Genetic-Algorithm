@@ -331,13 +331,32 @@ Graph ReadGraphFromFile()
 
 }
 
-void WriteResultsToFile(const std::map<int,int>& results)
+//score => numberOfIndividualsWithScore
+void WriteResultsToFile(const std::map<double,int>& percentages, const std::map<double, std::unordered_set<Individual, Individual::Hash, Individual::IsEqual>>& individuals)
 {
-    std::ofstream out{ FilePathToResults };
-    for (const auto& element : results)
+    std::ofstream out(FilePathToResults);
+    if (!out)
+        throw std::exception("Unable to open file.");
+
+    int totalNumberOfIndividuals{ 0 };
+    for (const auto& element : percentages)
     {
-        out << "SCORE:" << element.first << " => " << "PERCENTAGE: " << element.second << "%" << std::endl;
+        totalNumberOfIndividuals += element.second;
     }
+
+    for (const auto& element : percentages)
+    {
+        double percentage{ static_cast<double>(element.second) / totalNumberOfIndividuals * 100.0 };
+
+        out << "SCORE: " << element.first << " =>" << "\tNUMBER OF INDIVIDUALS: " << element.second << "\tPERCENTAGE: " << percentage << "%" << std::endl;
+
+        for (const auto& individual: individuals.at(element.first))
+        {
+            out << individual << std::endl;
+        }
+        out << std::endl;
+    }
+
     out.close();
 
 }
@@ -351,9 +370,8 @@ int main()
 
     ListOfIndividuals pop;
 
-    //score, numberOfIndividualsWithScore
-    std::map<int, int> results;
-
+    std::map<double, int> results;
+    std::map<double, std::unordered_set<Individual, Individual::Hash, Individual::IsEqual>> individuals;
     Individual individual;
     for (size_t _{ 0u }; _ < NumberOfRuns; ++_)
     {
@@ -361,9 +379,11 @@ int main()
         pop = basePopulation;
         algo.SetPopulation(std::move(pop));
         individual = algo.RunAlgorithm();
-        results[algo.GetFitnessScore(individual)]++;
+        auto score = algo.GetFitnessScore(individual);
+        results[score]++;
+        individuals[score].insert(std::move(individual));
     }
-    WriteResultsToFile(results);
+    WriteResultsToFile(results, individuals);
 
 
 
