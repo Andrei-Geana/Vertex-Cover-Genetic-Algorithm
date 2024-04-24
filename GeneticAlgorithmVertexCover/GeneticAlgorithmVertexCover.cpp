@@ -20,6 +20,11 @@
 * -copiii lui x1 cu x2 ii inlocuiesc pe acestia
 */
 
+/*
+* -sa fac selectia prin Stochastic Universal Sampling 
+* https://www.researchgate.net/publication/259461147_Selection_Methods_for_Genetic_Algorithms
+*/
+
 
 static int GetRandomIndex(int min, int max)
 {
@@ -385,14 +390,5 @@ int main()
     }
     WriteResultsToFile(results, individuals);
 
-
-
-    //TestFor5Nodes(algorithm);
-    /*try {
-        std::cout << std::boolalpha << a.IsSolution(std::vector<bool>{true,true,false,false,false});
-    }
-    catch (std::exception a) {
-        std::cout << a.what() << std::endl;
-    }*/
     return 0;
 }
