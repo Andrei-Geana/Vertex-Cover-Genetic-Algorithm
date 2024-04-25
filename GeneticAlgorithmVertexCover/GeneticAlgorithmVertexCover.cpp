@@ -56,6 +56,7 @@ static Individual GetPerson(int n = NodesNumber)
 
 //typedef  std::unordered_multiset<Individual, Individual::Hash, Individual::IsEqual> ListOfIndividuals;
 typedef std::vector<Individual> ListOfIndividuals;
+typedef std::vector<Individual*> ListOfPointersToIndividuals;
 
 
 class VertexCoverGeneticAlgorithm
@@ -147,6 +148,15 @@ public:
 private:
     void MakeOneIteration()
     {
+        population = std::move(GetNewPopulation());
+
+        CrossOverPopulationForSelectedIndividuals(std::forward<ListOfPointersToIndividuals>(GetIndividualsForCrossOver()));
+        
+        MutatePopulation();
+    }
+
+    ListOfIndividuals GetNewPopulation()
+    {
         std::vector<ListOfIndividuals> groups;
 
         //Get tournaments
@@ -162,20 +172,17 @@ private:
             newPopulation.emplace_back(GetBestPersonInGroup(group));
         }
 
-        //DEBUGGING
-        /*int index = 0;
-        for (const auto& winner : newPopulation)
-        {
-            std::cout << index++ << ": " << GetFitnessScore(winner) << '\n';
-        }*/
-        
+        return newPopulation;
+    }
 
+    ListOfPointersToIndividuals GetIndividualsForCrossOver()
+    {
         //ListOfIndividuals => individuals have a bigger chance to crossover with an another individual which has the same score => converges faster
         //vector => standard crossover => bigger diversity
-        std::vector<Individual*> selectedForCrossOver;
+        ListOfPointersToIndividuals selectedForCrossOver;
 
         //select those that will participate in crossover
-        for (auto& individual : newPopulation)
+        for (auto& individual : population)
         {
             if (Individual::GetChance() < CrossOverParticipationRate)
             {
@@ -189,22 +196,29 @@ private:
             selectedForCrossOver.pop_back();
         }
 
+        return selectedForCrossOver;
+    }
+
+    void CrossOverPopulationForSelectedIndividuals(const ListOfPointersToIndividuals& selectedForCrossOver)
+    {
         //make crossover
-        for (size_t index{ 0u } ; index<selectedForCrossOver.size()-1; index+=2u)
+        for (size_t index{ 0u }; index < selectedForCrossOver.size() - 1; index += 2u)
         {
             auto [c1, c2] = TwoPointCrossover(*selectedForCrossOver[index], *selectedForCrossOver[index + 1]);
 
             *selectedForCrossOver[index] = c1;
             *selectedForCrossOver[index + 1] = c2;
         }
+    }
 
-        //mutation of new population
-        for (auto& individual : newPopulation)
+    void MutatePopulation()
+    {
+        //mutation of population
+        for (auto& individual : population)
         {
             individual.Mutate();
         }
 
-        population = newPopulation;
     }
 
     ListOfIndividuals GetGroup()
