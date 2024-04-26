@@ -105,10 +105,17 @@ public:
     }
 
     //best fitness = smallest (min)
-    double GetFitnessScore(const Individual& individual) const
+    /*double GetFitnessScore(const Individual& individual) const
     {
         return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
+    }*/
+
+    //best fitness = biggest (max)
+    double GetFitnessScore(const Individual& individual) const
+    {
+        return 100 / (individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty);
     }
+
 
     Individual RunAlgorithm()
     {
@@ -148,14 +155,15 @@ public:
 private:
     void MakeOneIteration()
     {
-        population = std::move(GetNewPopulation());
+        population = std::move(RouletteWheelSelection());
 
         CrossOverPopulationForSelectedIndividuals(std::forward<ListOfPointersToIndividuals>(GetIndividualsForCrossOver()));
         
         MutatePopulation();
     }
 
-    ListOfIndividuals GetNewPopulation()
+    //selection function
+    ListOfIndividuals TournamentSelection()
     {
         std::vector<ListOfIndividuals> groups;
 
@@ -172,6 +180,47 @@ private:
             newPopulation.emplace_back(GetBestPersonInGroup(group));
         }
 
+        return newPopulation;
+    }
+
+    ListOfIndividuals RouletteWheelSelection()
+    {
+        ListOfIndividuals newPopulation;
+
+        double sumOfFitness{ 0 };
+        for (const auto& individual : population)
+        {
+            sumOfFitness += GetFitnessScore(individual);
+        }
+
+
+        std::vector<double> probabilities(PopulationSize);
+        for (size_t index{ 0u }; index < PopulationSize; ++index)
+        {
+            probabilities[index] = GetFitnessScore(population[index]) / sumOfFitness;
+        }
+
+
+        std::vector<double> cumulativeProbabilities(PopulationSize);
+        double probability{ 0 };
+        for (size_t index{ 0u }; index < PopulationSize; ++index)
+        {
+            probability += probabilities[index];
+            cumulativeProbabilities[index] = probability;
+        }
+
+        for (size_t index1{ 0u }; index1 < PopulationSize; ++index1)
+        {
+            double randomChance{ Individual::GetChance() };
+            for (size_t index{ 0u }; index < PopulationSize; ++index)
+            {
+                if (randomChance <= cumulativeProbabilities[index])
+                {
+                    newPopulation.emplace_back(population[index]);
+                    break;
+                }
+            }
+        }
         return newPopulation;
     }
 
@@ -240,7 +289,7 @@ private:
     {
         return *(std::min_element(group.begin(), group.end(),
             [this](const Individual& ind1, const Individual& ind2) {
-                return GetFitnessScore(ind1) < GetFitnessScore(ind2);
+                return GetFitnessScore(ind1) > GetFitnessScore(ind2);
             }));
     }
 
