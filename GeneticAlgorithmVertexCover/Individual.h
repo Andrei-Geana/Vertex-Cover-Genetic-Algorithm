@@ -13,6 +13,17 @@ public:
     Individual(const std::vector<bool>& chromosomes)
     {
         this->genes = chromosomes;
+        score = 0;
+    }
+
+    void SetScore(double score)
+    {
+        this->score = score;
+    }
+
+    double GetScore() const
+    {
+        return score;
     }
 
     int GetNumberOf1s() const
@@ -108,5 +119,6 @@ public:
 
 private:
     std::vector<bool> genes;
+    double score;
 };
 

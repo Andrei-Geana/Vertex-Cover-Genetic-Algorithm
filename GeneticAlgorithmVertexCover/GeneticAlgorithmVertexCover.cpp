@@ -121,6 +121,7 @@ public:
     {
         std::cout << "---------------------------------------------------------------" << std::endl <<"EPOCHS: "<< std::endl;
         //ShowPopulation();
+        CalculateAllFitnesses();
         auto individual = GetBestPersonInGroup(population);
         std::cout << "\tI: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
 
@@ -155,11 +156,21 @@ public:
 private:
     void MakeOneIteration()
     {
+        CalculateAllFitnesses();
+
         population = std::move(RouletteWheelSelection());
 
         CrossOverPopulationForSelectedIndividuals(std::forward<ListOfPointersToIndividuals>(GetIndividualsForCrossOver()));
         
         MutatePopulation();
+    }
+
+    void CalculateAllFitnesses()
+    {
+        for (auto& individual : population)
+        {
+            individual.SetScore(GetFitnessScore(individual));
+        }
     }
 
     //selection function
@@ -190,14 +201,14 @@ private:
         double sumOfFitness{ 0 };
         for (const auto& individual : population)
         {
-            sumOfFitness += GetFitnessScore(individual);
+            sumOfFitness += individual.GetScore();
         }
 
 
         std::vector<double> probabilities(PopulationSize);
         for (size_t index{ 0u }; index < PopulationSize; ++index)
         {
-            probabilities[index] = GetFitnessScore(population[index]) / sumOfFitness;
+            probabilities[index] = population[index].GetScore() / sumOfFitness;
         }
 
 
@@ -208,6 +219,7 @@ private:
             probability += probabilities[index];
             cumulativeProbabilities[index] = probability;
         }
+
 
         for (size_t index1{ 0u }; index1 < PopulationSize; ++index1)
         {
@@ -289,7 +301,7 @@ private:
     {
         return *(std::min_element(group.begin(), group.end(),
             [this](const Individual& ind1, const Individual& ind2) {
-                return GetFitnessScore(ind1) > GetFitnessScore(ind2);
+                return ind1.GetScore() > ind2.GetScore();
             }));
     }
 
