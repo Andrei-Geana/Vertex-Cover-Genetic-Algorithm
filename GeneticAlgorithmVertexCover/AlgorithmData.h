@@ -1,13 +1,14 @@
 int NodesNumber;
-int PopulationSize = 100;
+int PopulationSize = 200;
 const int NumberOfIterations = 10;
 const double LambdaFitness = 7.5;
-const int NotSolutionPenalty = 70;
+const int IsSolutionPoints = 40;
 const int TourneySize = 4;
 const int PopulationAfterSelection = PopulationSize;
 const double MutationRate = 0.01;
 const double CrossOverParticipationRate = 0.5;
-const size_t NumberOfRuns = 50;
+const size_t NumberOfRuns = 1000;
+bool ElitismIsEnabled = true;
 
 const std::string FilePathToGraph{ "intrare.txt" };
 const std::string FilePathToResults{ "iesire.txt" };
@@ -21,4 +22,9 @@ const std::string FilePathToResults{ "iesire.txt" };
 
 	daca modific NumberOfIterations => (daca il cresc) se exploreaza mai multe solutii, se ajunge la solutii optime si se ajunge la convergenta
 									   (daca il scad) se exploreaza putine solutii, nu se ajunge la solutii optime si nu se ajunge la convergenta in majoritatea cazurilor
+*/
+
+/*
+* calculez scorul la fiecare iteratie : performanta -60ms
+* elitism (pastrez cel mai bun individ) : rezultate mai bune
 */

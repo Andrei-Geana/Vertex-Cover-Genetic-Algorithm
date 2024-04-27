@@ -101,29 +101,38 @@ public:
     void ShowPopulation() const
     {
         for (const auto& individual : population)
-                std::cout << individual << " SCORE: " << GetFitnessScore(individual) << std::endl;
+                std::cout << individual << " SCORE: " << individual.GetScore() << std::endl;
     }
 
     //best fitness = smallest (min)
     /*double GetFitnessScore(const Individual& individual) const
     {
-        return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty;
+        return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * IsSolutionPoints;
+    }*/
+
+    //best fitness = biggest (max)
+    /*double GetFitnessScore(const Individual& individual) const
+    {
+        return 100 / (individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * IsSolutionPoints);
     }*/
 
     //best fitness = biggest (max)
     double GetFitnessScore(const Individual& individual) const
     {
-        return 100 / (individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * NotSolutionPenalty);
+        double score{ 0.0 };
+        score = ((int)individual.GetNumberOfChromosomes() - individual.GetNumberOf1s());
+        score += (baseGraph.GetNumberOfArches() - baseGraph.GetNumberOfNotVerifiedArch(individual));
+        score += baseGraph.IsSolution(individual) * IsSolutionPoints;
+        return score;
     }
-
 
     Individual RunAlgorithm()
     {
         std::cout << "---------------------------------------------------------------" << std::endl <<"EPOCHS: "<< std::endl;
-        //ShowPopulation();
         CalculateAllFitnesses();
-        auto individual = GetBestPersonInGroup(population);
-        std::cout << "\tI: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
+        //ShowPopulation();
+        auto individual = GetBestPersonInPopulation(population);
+        std::cout << "\tI: Best Individual: " << individual << " Score: " << individual.GetScore() << std::endl;
 
         auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -132,8 +141,9 @@ public:
         {
             MakeOneIteration();
             indexOfIteration++;
-            //ShowPopulation();
-            /*individual = GetBestPersonInGroup(population);
+            //CalculateAllFitnesses();
+            //ShowPopulation(); std::cout << "\n\n";
+            /*individual = GetBestPersonInPopulation(population);
             std::cout << "\t";
             if (indexOfIteration == NumberOfIterations)
                 std::cout << "E";
@@ -144,10 +154,11 @@ public:
 
         auto endTime = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+        CalculateAllFitnesses();
         //ShowPopulation();
-        individual = GetBestPersonInGroup(population);
+        individual = GetBestPersonInPopulation(population);
         std::cout << "\t";
-        std::cout << "E: Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;
+        std::cout << "E: Best Individual: " << individual << " Score: " << individual.GetScore() << std::endl;
         std::cout << "Time taken: " << duration << " milliseconds\n";
         return individual;
     }
@@ -157,12 +168,22 @@ private:
     void MakeOneIteration()
     {
         CalculateAllFitnesses();
-
-        population = std::move(RouletteWheelSelection());
+        if (ElitismEnabled)
+        {
+            auto individual = GetBestPersonInPopulation(population);
+            population = std::move(TournamentSelection());
+            population.pop_back();
+            population.emplace_back(std::move(individual));
+        }
+        else
+        {
+            population = std::move(TournamentSelection());
+        }
 
         CrossOverPopulationForSelectedIndividuals(std::forward<ListOfPointersToIndividuals>(GetIndividualsForCrossOver()));
         
         MutatePopulation();
+
     }
 
     void CalculateAllFitnesses()
@@ -176,7 +197,7 @@ private:
     //selection function
     ListOfIndividuals TournamentSelection()
     {
-        std::vector<ListOfIndividuals> groups;
+        std::vector<ListOfPointersToIndividuals> groups;
 
         //Get tournaments
         while (groups.size() != PopulationSize)
@@ -188,7 +209,7 @@ private:
         ListOfIndividuals newPopulation;
         for (const auto& group : groups)
         {
-            newPopulation.emplace_back(GetBestPersonInGroup(group));
+            newPopulation.emplace_back(new Individual(GetBestPersonInGroup(group)));
         }
 
         return newPopulation;
@@ -267,8 +288,8 @@ private:
         {
             auto [c1, c2] = TwoPointCrossover(*selectedForCrossOver[index], *selectedForCrossOver[index + 1]);
 
-            *selectedForCrossOver[index] = c1;
-            *selectedForCrossOver[index + 1] = c2;
+            *selectedForCrossOver[index] = std::move(c1);
+            *selectedForCrossOver[index + 1] = std::move(c2);
         }
     }
 
@@ -282,9 +303,9 @@ private:
 
     }
 
-    ListOfIndividuals GetGroup()
+    ListOfPointersToIndividuals GetGroup()
     {
-        ListOfIndividuals group;
+        ListOfPointersToIndividuals group;
         while (group.size() < TourneySize)
         {
             group.emplace_back(GetRandomPerson());
@@ -292,17 +313,36 @@ private:
         return group;
     }
     
-    Individual GetRandomPerson()
+    Individual* GetRandomPerson()
     {
-        return population[GetRandomIndex(0, (int)population.size() - 1)];
+        return &population[GetRandomIndex(0, (int)population.size() - 1)];
     }
 
-    Individual GetBestPersonInGroup(const ListOfIndividuals& group) const
+    Individual* GetBestPersonInGroup(const ListOfPointersToIndividuals& group) const
     {
-        return *(std::min_element(group.begin(), group.end(),
-            [this](const Individual& ind1, const Individual& ind2) {
-                return ind1.GetScore() > ind2.GetScore();
-            }));
+        Individual* bestIndividual = nullptr;
+        for (const auto& individ : group)
+        {
+            if (bestIndividual == nullptr)
+            {
+                bestIndividual = individ;
+                continue;
+            }
+            if (individ->GetScore() > bestIndividual->GetScore())
+                bestIndividual = individ;
+        }
+        return bestIndividual;
+    }
+
+    Individual GetBestPersonInPopulation(const ListOfIndividuals& group) const
+    {
+        Individual bestIndividual;
+        for (const auto& individ : group)
+        {
+            if (individ.GetScore() > bestIndividual.GetScore())
+                bestIndividual = individ;
+        }
+        return bestIndividual;
     }
 
     std::pair<Individual, Individual> OnPointCrossover(const Individual& parent1, const Individual& parent2) const
@@ -459,9 +499,10 @@ int main()
         pop = basePopulation;
         algo.SetPopulation(std::move(pop));
         individual = algo.RunAlgorithm();
-        auto score = algo.GetFitnessScore(individual);
+        auto score = individual.GetScore();
         results[score]++;
         individuals[score].insert(std::move(individual));
+        WriteResultsToFile(results, individuals);
     }
     WriteResultsToFile(results, individuals);
 

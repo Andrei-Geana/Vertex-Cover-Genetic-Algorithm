@@ -16,6 +16,12 @@ public:
         score = 0;
     }
 
+    Individual(Individual* i)
+    {
+        genes = i->genes;
+        score = i->score;
+    }
+
     void SetScore(double score)
     {
         this->score = score;
