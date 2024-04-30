@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <unordered_set>
+#include <fstream>
 
 #include "Arch.h"
 #include "Individual.h"
@@ -20,6 +21,9 @@ public:
     void PrintAllArches();
 
     int GetNumberOfArches() const;
+
+public:
+    static Graph ReadGraphFromFile(const std::string& FilePath = FilePathToGraph);
 
 private:
     std::unordered_set<int> nodes;

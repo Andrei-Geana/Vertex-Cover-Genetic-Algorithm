@@ -63,3 +63,25 @@ int Graph::GetNumberOfArches() const
 {
     return (int)arches.size();
 }
+
+Graph Graph::ReadGraphFromFile(const std::string& FilePath)
+{
+    std::ifstream fin{ FilePathToGraph };
+    fin >> NodesNumber;
+    Graph graph{ NodesNumber };
+    int from{}, to{};
+    while (fin >> from >> to)
+    {
+        try
+        {
+            graph.AddArch(from, to);
+        }
+        catch (std::exception ex)
+        {
+            std::cout << ex.what() << " for arch: (" << from << ", " << to << ")" << std::endl;
+        }
+    }
+    fin.close();
+    return graph;
+
+}

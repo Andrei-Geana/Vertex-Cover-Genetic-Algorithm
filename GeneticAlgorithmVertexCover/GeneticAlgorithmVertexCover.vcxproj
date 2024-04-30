@@ -132,11 +132,13 @@
     <ClCompile Include="GeneticAlgorithmVertexCover.cpp" />
     <ClCompile Include="Graph.cpp" />
     <ClCompile Include="Individual.cpp" />
+    <ClCompile Include="VertexCoverGeneticAlgorithm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AlgorithmData.h" />
     <ClInclude Include="Arch.h" />
     <ClInclude Include="Graph.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="Individual.h" />
     <ClInclude Include="VertexCoverGeneticAlgorithm.h" />
   </ItemGroup>

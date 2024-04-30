@@ -44,19 +44,22 @@ void Individual::Mutate()
 {
     for (size_t index{ 0u }; index < genes.size(); ++index)
     {
-        if (GetChance() < MutationRate)
+        if (Helper::GetChance() < MutationRate)
         {
             genes[index] = !genes[index];
         }
     }
 }
 
-double Individual::GetChance(double min, double max)
+Individual Individual::GetPerson(int n)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> distrib(min, max);
-    return distrib(gen);
+    std::vector<bool> genes(n, false);
+    for (size_t i{ 0u }; i < NodesNumber; ++i)
+    {
+        if (auto possibility = Helper::ShouldChange(); possibility)
+            genes[i] = !genes[i];
+    }
+    return Individual{ genes };
 }
 
 std::ostream& operator<<(std::ostream& out, const Individual& individ)

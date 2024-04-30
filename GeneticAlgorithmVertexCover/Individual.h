@@ -3,6 +3,7 @@
 #include <vector>
 #include <random>
 
+#include "Helper.h"
 #include "AlgorithmData.h"
 
 class Individual
@@ -45,7 +46,8 @@ public:
 public:
 
     friend std::ostream& operator<<(std::ostream& out, const Individual& individ);
-    static double GetChance(double min = 0, double max = 1);
+
+    static Individual GetPerson(int n = NodesNumber);
 
 public:
 
