@@ -128,7 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Arch.cpp" />
     <ClCompile Include="GeneticAlgorithmVertexCover.cpp" />
+    <ClCompile Include="Graph.cpp" />
     <ClCompile Include="Individual.cpp" />
   </ItemGroup>
   <ItemGroup>

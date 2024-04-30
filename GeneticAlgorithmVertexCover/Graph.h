@@ -8,68 +8,18 @@
 class Graph
 {
 public:
-    Graph() {/*EMPTY*/ }
-    Graph(int n)
-    {
-        for (int i = 0; i < n; ++i)
-        {
-            nodes.insert(i);
-        }
-    }
+    Graph();
+    Graph(int n);
 
-    void AddArch(int from, int to)
-    {
-        if (!nodes.contains(from))
-            throw std::exception("start node not in graph");
-        if (!nodes.contains(to))
-            throw std::exception("destination node not in graph");
+    void AddArch(int from, int to);
 
-        arches.insert(Arch{ from, to });
-    }
+    bool IsSolution(const Individual& individ) const;
 
-    bool IsSolution(const Individual& individ) const
-    {
-        if (individ.GetNumberOfChromosomes() != nodes.size())
-            throw std::exception("vector size not equal to number of nodes in graph");
+    int GetNumberOfNotVerifiedArch(const Individual& individ) const;
 
-        for (const Arch& arc : arches)
-        {
-            if (individ[arc.From()])
-                continue;
-            if (individ[arc.To()])
-                continue;
-            return false;
-        }
+    void PrintAllArches();
 
-        return true;
-    }
-
-    int GetNumberOfNotVerifiedArch(const Individual& individ) const
-    {
-        int count{ 0 };
-        for (const Arch& arc : arches)
-        {
-            if (individ[arc.From()])
-                continue;
-            if (individ[arc.To()])
-                continue;
-            count++;
-        }
-        return count;
-    }
-
-    void PrintAllArches()
-    {
-        for (const Arch& elem : arches)
-        {
-            std::cout << elem.From() << "," << elem.To() << std::endl;
-        }
-    }
-
-    int GetNumberOfArches() const
-    {
-        return (int)arches.size();
-    }
+    int GetNumberOfArches() const;
 
 private:
     std::unordered_set<int> nodes;

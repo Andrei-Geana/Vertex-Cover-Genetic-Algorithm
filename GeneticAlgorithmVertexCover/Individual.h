@@ -8,45 +8,19 @@
 class Individual
 {
 public:
-    Individual() {/*EMPTY*/ }
+    Individual();
 
-    Individual(const std::vector<bool>& chromosomes)
-    {
-        this->genes = chromosomes;
-        score = 0;
-    }
+    Individual(const std::vector<bool>& chromosomes);
 
-    Individual(Individual* i)
-    {
-        genes = i->genes;
-        score = i->score;
-    }
+    Individual(Individual* i);
 
-    void SetScore(double score)
-    {
-        this->score = score;
-    }
+    void SetScore(double score);
 
-    double GetScore() const
-    {
-        return score;
-    }
+    double GetScore() const;
 
-    int GetNumberOf1s() const
-    {
-        int count{ 0 };
-        for (const auto& chromosome : genes)
-        {
-            if (chromosome)
-                count++;
-        }
-        return count;
-    }
+    int GetNumberOf1s() const;
 
-    size_t GetNumberOfChromosomes() const
-    {
-        return genes.size();
-    }
+    size_t GetNumberOfChromosomes() const;
 
     std::vector<bool>::reference operator[](size_t index)
     {
@@ -66,35 +40,12 @@ public:
         return genes[index];
     }
 
-    void Mutate()
-    {
-        for (size_t index{ 0u }; index < genes.size(); ++index)
-        {
-            if (GetChance() < MutationRate)
-            {
-                genes[index] = !genes[index];
-            }
-        }
-    }
+    void Mutate();
 
 public:
 
-    friend std::ostream& operator<<(std::ostream& out, const Individual& individ) 
-    {
-        for (const auto& chromosome : individ.genes)
-        {
-            out << chromosome << ' ';
-        }
-        return out;
-    }
-
-    static double GetChance(double min = 0, double max = 1)
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_real_distribution<> distrib(min, max);
-        return distrib(gen);
-    }
+    friend std::ostream& operator<<(std::ostream& out, const Individual& individ);
+    static double GetChance(double min = 0, double max = 1);
 
 public:
 

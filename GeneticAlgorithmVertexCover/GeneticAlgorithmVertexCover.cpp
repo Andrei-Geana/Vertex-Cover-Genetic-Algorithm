@@ -20,12 +20,6 @@
 * -copiii lui x1 cu x2 ii inlocuiesc pe acestia
 */
 
-/*
-* -sa fac selectia prin Stochastic Universal Sampling 
-* https://www.researchgate.net/publication/259461147_Selection_Methods_for_Genetic_Algorithms
-*/
-
-
 static int GetRandomIndex(int min, int max)
 {
     std::random_device rd;
@@ -168,7 +162,7 @@ private:
     void MakeOneIteration()
     {
         CalculateAllFitnesses();
-        if (ElitismEnabled)
+        if (ElitismIsEnabled)
         {
             auto individual = GetBestPersonInPopulation(population);
             population = std::move(TournamentSelection());

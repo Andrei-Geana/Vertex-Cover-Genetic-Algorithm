@@ -1,17 +1,17 @@
-int NodesNumber;
-int PopulationSize = 200;
-const int NumberOfIterations = 10;
-const double LambdaFitness = 7.5;
-const int IsSolutionPoints = 40;
-const int TourneySize = 4;
-const int PopulationAfterSelection = PopulationSize;
-const double MutationRate = 0.01;
-const double CrossOverParticipationRate = 0.5;
-const size_t NumberOfRuns = 1000;
-bool ElitismIsEnabled = true;
+inline int NodesNumber;
+inline int PopulationSize = 200;
+inline const int NumberOfIterations = 10;
+inline const double LambdaFitness = 7.5;
+inline const int IsSolutionPoints = 40;
+inline const int TourneySize = 4;
+inline const int PopulationAfterSelection = PopulationSize;
+inline const double MutationRate = 0.01;
+inline const double CrossOverParticipationRate = 0.5;
+inline const size_t NumberOfRuns = 1000;
+inline bool ElitismIsEnabled = true;
 
-const std::string FilePathToGraph{ "intrare.txt" };
-const std::string FilePathToResults{ "iesire.txt" };
+inline const std::string FilePathToGraph{ "intrare.txt" };
+inline const std::string FilePathToResults{ "iesire.txt" };
 //best data values
 /*
 	daca modific TourneySize		=> (daca il micsorez) se exploreaza mai multe solutii
