@@ -58,5 +58,8 @@
     <Text Include="iesire.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="population.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

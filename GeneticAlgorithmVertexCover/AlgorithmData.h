@@ -1,5 +1,5 @@
 inline int NodesNumber;
-inline int PopulationSize = 200;
+inline int PopulationSize = 100;
 inline const int NumberOfIterations = 10;
 inline const double LambdaFitness = 7.5;
 inline const int IsSolutionPoints = 40;
@@ -12,6 +12,7 @@ inline bool ElitismIsEnabled = true;
 
 inline const std::string FilePathToGraph{ "intrare.txt" };
 inline const std::string FilePathToResults{ "iesire.txt" };
+inline const std::string FilePathToPopulation{ "population.txt" };
 //best data values
 /*
 	daca modific TourneySize		=> (daca il micsorez) se exploreaza mai multe solutii

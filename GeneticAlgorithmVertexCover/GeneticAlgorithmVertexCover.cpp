@@ -64,8 +64,9 @@ int main()
     for (size_t _{ 0u }; _ < NumberOfRuns; ++_)
     {
         std::cout << std::endl;
-        pop = basePopulation;
-        algo.SetPopulation(std::move(pop));
+        //pop = basePopulation;
+        //algo.SetPopulation(std::move(pop));
+        algo.ReadPopulationFromFile();
         individual = algo.RunAlgorithm();
         auto score = individual.GetScore();
         results[score]++;

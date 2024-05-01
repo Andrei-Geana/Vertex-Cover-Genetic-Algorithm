@@ -38,9 +38,11 @@ public:
 
     Individual RunAlgorithm();
 
+    void SavePopulationInFile(const std::string& FilePath = FilePathToPopulation) const;
+    void ReadPopulationFromFile(const std::string& FilePath = FilePathToPopulation) ;
+
 public:
 
-    //basic GetPopulation
     static ListOfIndividuals GetPopulation(int numberOfPeople = PopulationSize);
 
 private:

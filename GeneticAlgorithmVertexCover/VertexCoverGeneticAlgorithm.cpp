@@ -14,6 +14,7 @@ VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(const Graph& base)
 void VertexCoverGeneticAlgorithm::SetPopulation(ListOfIndividuals&& population)
 {
     this->population = std::move(population);
+    SavePopulationInFile();
 }
 
 //basic GetPopulation
@@ -88,6 +89,50 @@ Individual VertexCoverGeneticAlgorithm::RunAlgorithm()
     std::cout << "E: Best Individual: " << individual << " Score: " << individual.GetScore() << std::endl;
     std::cout << "Time taken: " << duration << " milliseconds\n";
     return individual;
+}
+
+void VertexCoverGeneticAlgorithm::SavePopulationInFile(const std::string& FilePath) const
+{
+    std::ofstream fout{ FilePath };
+    if (!fout.is_open())
+        throw std::exception{ "unable to open file to write population" };
+    for (const auto& pop : population)
+    {
+        fout << pop << std::endl;
+    }
+    fout.close();
+}
+
+void VertexCoverGeneticAlgorithm::ReadPopulationFromFile(const std::string& FilePath)
+{
+    std::vector<Individual> result;
+
+    std::ifstream file(FilePath);
+    if (!file.is_open())
+    {
+        std::cerr << "Unable to open file: " << FilePath << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (line.empty())
+            continue;
+
+        std::vector<bool> transformedVector;
+        for (char c : line)
+        {
+            if (c != ' ')
+                transformedVector.emplace_back(c == '1' ? 1 : 0);
+        }
+
+        if (!transformedVector.empty())
+            result.emplace_back(Individual{transformedVector});
+    }
+
+    file.close();
+    population = result;
 }
 
 void VertexCoverGeneticAlgorithm::MakeOneIteration()
