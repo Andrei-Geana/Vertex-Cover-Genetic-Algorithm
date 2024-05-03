@@ -22,7 +22,7 @@
 //score => numberOfIndividualsWithScore
 void WriteResultsToFile(const std::map<double,int>& percentages, const std::map<double, std::unordered_set<Individual, Individual::Hash, Individual::IsEqual>>& individuals)
 {
-    std::ofstream out(FilePathToResults);
+    std::ofstream out(AlgorithmData::FilePathToResults);
     if (!out)
         throw std::exception("Unable to open file.");
 
@@ -51,7 +51,7 @@ void WriteResultsToFile(const std::map<double,int>& percentages, const std::map<
 
 int main()
 {
-    Graph a{ Graph::ReadGraphFromFile()};
+    Graph* a{ Graph::ReadGraphFromFile()};
     VertexCoverGeneticAlgorithm algo{ a };
 
     ListOfIndividuals basePopulation{ VertexCoverGeneticAlgorithm::GetPopulation() };
@@ -61,11 +61,12 @@ int main()
     std::map<double, int> results;
     std::map<double, std::unordered_set<Individual, Individual::Hash, Individual::IsEqual>> individuals;
     Individual individual;
-    for (size_t _{ 0u }; _ < NumberOfRuns; ++_)
+    for (size_t _{ 0u }; _ < AlgorithmData::NumberOfRuns; ++_)
     {
         std::cout << std::endl;
-        //pop = basePopulation;
+        pop = basePopulation;
         //algo.SetPopulation(std::move(pop));
+       // algo.SavePopulationInFile();
         algo.ReadPopulationFromFile();
         individual = algo.RunAlgorithm();
         auto score = individual.GetScore();
@@ -73,7 +74,7 @@ int main()
         individuals[score].insert(std::move(individual));
         WriteResultsToFile(results, individuals);
     }
-    WriteResultsToFile(results, individuals);
+    //WriteResultsToFile(results, individuals);
 
     return 0;
 }

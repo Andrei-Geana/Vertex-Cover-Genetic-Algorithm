@@ -3,8 +3,8 @@
 #include <vector>
 #include <random>
 
+#include "Graph.h"
 #include "Helper.h"
-#include "AlgorithmData.h"
 
 class Individual
 {
@@ -13,11 +13,19 @@ public:
 
     Individual(const std::vector<bool>& chromosomes);
 
+    Individual(const std::vector<bool>& chromosomes, Graph* graph);
+
     Individual(Individual* i);
 
     void SetScore(double score);
 
     double GetScore() const;
+
+    void SetGraph(Graph* graph);
+
+    Graph* GetGraph() const;
+
+    void UpdateScore();
 
     int GetNumberOf1s() const;
 
@@ -47,7 +55,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const Individual& individ);
 
-    static Individual GetPerson(int n = NodesNumber);
+    static Individual GetPerson(const int& n = AlgorithmData::NodesNumber);
 
 public:
 
@@ -79,5 +87,6 @@ public:
 private:
     std::vector<bool> genes;
     double score;
+    Graph* graph;
 };
 

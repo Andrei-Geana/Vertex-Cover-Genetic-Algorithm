@@ -1,12 +1,12 @@
 #include "VertexCoverGeneticAlgorithm.h"
 
-VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(const Graph& base, ListOfIndividuals&& population)
+VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(Graph* base, ListOfIndividuals&& population)
 {
     baseGraph = base;
     this->population = std::move(population);
 }
 
-VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(const Graph& base)
+VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(Graph* base)
 {
     baseGraph = base;
 }
@@ -43,21 +43,10 @@ void VertexCoverGeneticAlgorithm::ShowPopulation() const
         std::cout << individual << " SCORE: " << individual.GetScore() << std::endl;
 }
 
-//best fitness = biggest (max)
-
-double VertexCoverGeneticAlgorithm::GetFitnessScore(const Individual& individual) const
-{
-    double score{ 0.0 };
-    score = ((int)individual.GetNumberOfChromosomes() - individual.GetNumberOf1s());
-    score += (baseGraph.GetNumberOfArches() - baseGraph.GetNumberOfNotVerifiedArch(individual));
-    score += baseGraph.IsSolution(individual) * IsSolutionPoints;
-    return score;
-}
-
 Individual VertexCoverGeneticAlgorithm::RunAlgorithm()
 {
     std::cout << "---------------------------------------------------------------" << std::endl << "EPOCHS: " << std::endl;
-    CalculateAllFitnesses();
+    SetGraphToPopulation();
     //ShowPopulation();
     auto individual = GetBestPersonInPopulation(population);
     std::cout << "\tI: Best Individual: " << individual << " Score: " << individual.GetScore() << std::endl;
@@ -65,24 +54,23 @@ Individual VertexCoverGeneticAlgorithm::RunAlgorithm()
     auto startTime = std::chrono::high_resolution_clock::now();
 
     size_t indexOfIteration{ 0u };
-    while (indexOfIteration < NumberOfIterations)
+    while (indexOfIteration < AlgorithmData::NumberOfIterations)
     {
         MakeOneIteration();
         indexOfIteration++;
         //CalculateAllFitnesses();
         //ShowPopulation(); std::cout << "\n\n";
-        /*individual = GetBestPersonInPopulation(population);
+        individual = GetBestPersonInPopulation(population);
         std::cout << "\t";
-        if (indexOfIteration == NumberOfIterations)
-        std::cout << "E";
+        if (indexOfIteration == AlgorithmData::NumberOfIterations)
+            std::cout << "E";
         else
-        std::cout << indexOfIteration;
-        std::cout << ": Best Individual: " << individual << " Score: " << GetFitnessScore(individual) << std::endl;*/
+            std::cout << indexOfIteration;
+        std::cout << ": Best Individual: " << individual << " Score: " << individual.GetScore() << std::endl;
     }
 
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-    CalculateAllFitnesses();
     //ShowPopulation();
     individual = GetBestPersonInPopulation(population);
     std::cout << "\t";
@@ -137,13 +125,15 @@ void VertexCoverGeneticAlgorithm::ReadPopulationFromFile(const std::string& File
 
 void VertexCoverGeneticAlgorithm::MakeOneIteration()
 {
-    CalculateAllFitnesses();
-    if (ElitismIsEnabled)
+    if (AlgorithmData::ElitismIsEnabled)
     {
         auto individual = GetBestPersonInPopulation(population);
         population = std::move(TournamentSelection());
+        CrossOverPopulationForSelectedIndividuals(std::forward<ListOfPointersToIndividuals>(GetIndividualsForCrossOver()));
+        MutatePopulation();
         population.pop_back();
         population.emplace_back(std::move(individual));
+        return;
     }
     else
     {
@@ -156,11 +146,11 @@ void VertexCoverGeneticAlgorithm::MakeOneIteration()
 
 }
 
-void VertexCoverGeneticAlgorithm::CalculateAllFitnesses()
+void VertexCoverGeneticAlgorithm::SetGraphToPopulation()
 {
     for (auto& individual : population)
     {
-        individual.SetScore(GetFitnessScore(individual));
+        individual.SetGraph(baseGraph);
     }
 }
 
@@ -171,7 +161,7 @@ ListOfIndividuals VertexCoverGeneticAlgorithm::TournamentSelection()
     std::vector<ListOfPointersToIndividuals> groups;
 
     //Get tournaments
-    while (groups.size() != PopulationSize)
+    while (groups.size() != AlgorithmData::PopulationSize)
     {
         groups.emplace_back(GetGroup());
     }
@@ -197,26 +187,26 @@ ListOfIndividuals VertexCoverGeneticAlgorithm::RouletteWheelSelection()
     }
 
 
-    std::vector<double> probabilities(PopulationSize);
-    for (size_t index{ 0u }; index < PopulationSize; ++index)
+    std::vector<double> probabilities(AlgorithmData::PopulationSize);
+    for (size_t index{ 0u }; index < AlgorithmData::PopulationSize; ++index)
     {
         probabilities[index] = population[index].GetScore() / sumOfFitness;
     }
 
 
-    std::vector<double> cumulativeProbabilities(PopulationSize);
+    std::vector<double> cumulativeProbabilities(AlgorithmData::PopulationSize);
     double probability{ 0 };
-    for (size_t index{ 0u }; index < PopulationSize; ++index)
+    for (size_t index{ 0u }; index < AlgorithmData::PopulationSize; ++index)
     {
         probability += probabilities[index];
         cumulativeProbabilities[index] = probability;
     }
 
 
-    for (size_t index1{ 0u }; index1 < PopulationSize; ++index1)
+    for (size_t index1{ 0u }; index1 < AlgorithmData::PopulationSize; ++index1)
     {
         double randomChance{ Helper::GetChance() };
-        for (size_t index{ 0u }; index < PopulationSize; ++index)
+        for (size_t index{ 0u }; index < AlgorithmData::PopulationSize; ++index)
         {
             if (randomChance <= cumulativeProbabilities[index])
             {
@@ -237,7 +227,7 @@ ListOfPointersToIndividuals VertexCoverGeneticAlgorithm::GetIndividualsForCrossO
     //select those that will participate in crossover
     for (auto& individual : population)
     {
-        if (Helper::GetChance() < CrossOverParticipationRate)
+        if (Helper::GetChance() < AlgorithmData::CrossOverParticipationRate)
         {
             selectedForCrossOver.emplace_back(&individual);
         }
@@ -277,7 +267,7 @@ void VertexCoverGeneticAlgorithm::MutatePopulation()
 ListOfPointersToIndividuals VertexCoverGeneticAlgorithm::GetGroup()
 {
     ListOfPointersToIndividuals group;
-    while (group.size() < TourneySize)
+    while (group.size() < AlgorithmData::TourneySize)
     {
         group.emplace_back(GetRandomPerson());
     }
@@ -335,8 +325,8 @@ std::pair<Individual, Individual> VertexCoverGeneticAlgorithm::OnPointCrossover(
         chromosomesForSecondChild[index] = parent1[index];
     }
 
-    Individual child1{ chromosomesForFirstChild };
-    Individual child2{ chromosomesForSecondChild };
+    Individual child1{ chromosomesForFirstChild, parent1.GetGraph()};
+    Individual child2{ chromosomesForSecondChild, parent1.GetGraph() };
     return std::make_pair(child1, child2);
 }
 
@@ -368,8 +358,8 @@ std::pair<Individual, Individual> VertexCoverGeneticAlgorithm::TwoPointCrossover
         }
     }
 
-    Individual child1{ chromosomesForFirstChild };
-    Individual child2{ chromosomesForSecondChild };
+    Individual child1{ chromosomesForFirstChild, parent1.GetGraph() };
+    Individual child2{ chromosomesForSecondChild, parent1.GetGraph() };
     return std::make_pair(child1, child2);
 }
 
@@ -390,7 +380,7 @@ std::pair<Individual, Individual> VertexCoverGeneticAlgorithm::UniformCrossover(
         }
     }
 
-    Individual child1{ chromosomesForFirstChild };
-    Individual child2{ chromosomesForSecondChild };
+    Individual child1{ chromosomesForFirstChild, parent1.GetGraph() };
+    Individual child2{ chromosomesForSecondChild, parent1.GetGraph() };
     return std::make_pair(child1, child2);
 }

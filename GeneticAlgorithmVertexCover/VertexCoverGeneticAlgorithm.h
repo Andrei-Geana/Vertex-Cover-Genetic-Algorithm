@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
-#include "Individual.h"
-#include "Graph.h"
 #include <chrono>
+#include "Individual.h"
 
 //typedef  std::unordered_multiset<Individual, Individual::Hash, Individual::IsEqual> ListOfIndividuals;
 typedef std::vector<Individual> ListOfIndividuals;
@@ -13,42 +12,27 @@ class VertexCoverGeneticAlgorithm
 {
 public:
 
-    VertexCoverGeneticAlgorithm(const Graph& base, ListOfIndividuals&& population);
+    VertexCoverGeneticAlgorithm(Graph* base, ListOfIndividuals&& population);
 
-    VertexCoverGeneticAlgorithm(const Graph& base);
+    VertexCoverGeneticAlgorithm(Graph* base);
 
     void SetPopulation(ListOfIndividuals&& population);
 
     void ShowPopulation() const;
 
-    //best fitness = smallest (min)
-    /*double GetFitnessScore(const Individual& individual) const
-    {
-        return individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * IsSolutionPoints;
-    }*/
-
-    //best fitness = biggest (max)
-    /*double GetFitnessScore(const Individual& individual) const
-    {
-        return 100 / (individual.GetNumberOf1s() + LambdaFitness * baseGraph.GetNumberOfNotVerifiedArch(individual) + (!baseGraph.IsSolution(individual)) * IsSolutionPoints);
-    }*/
-
-    //best fitness = biggest (max)
-    double GetFitnessScore(const Individual& individual) const;
-
     Individual RunAlgorithm();
 
-    void SavePopulationInFile(const std::string& FilePath = FilePathToPopulation) const;
-    void ReadPopulationFromFile(const std::string& FilePath = FilePathToPopulation) ;
+    void SavePopulationInFile(const std::string& FilePath = AlgorithmData::FilePathToPopulation) const;
+    void ReadPopulationFromFile(const std::string& FilePath = AlgorithmData::FilePathToPopulation) ;
 
 public:
 
-    static ListOfIndividuals GetPopulation(int numberOfPeople = PopulationSize);
+    static ListOfIndividuals GetPopulation(int numberOfPeople = AlgorithmData::PopulationSize);
 
 private:
     void MakeOneIteration();
 
-    void CalculateAllFitnesses();
+    void SetGraphToPopulation();
 
     //selection function
     ListOfIndividuals TournamentSelection();
@@ -76,6 +60,6 @@ private:
     std::pair<Individual, Individual> UniformCrossover(const Individual& parent1, const Individual& parent2) const;
 
 private:
-    Graph baseGraph;
+    Graph* baseGraph;
     ListOfIndividuals population;
 };

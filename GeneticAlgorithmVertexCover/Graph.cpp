@@ -20,9 +20,9 @@ void Graph::AddArch(int from, int to)
     arches.insert(Arch{ from, to });
 }
 
-bool Graph::IsSolution(const Individual& individ) const
+bool Graph::IsSolution(const std::vector<bool>& individ) const
 {
-    if (individ.GetNumberOfChromosomes() != nodes.size())
+    if (individ.size() != nodes.size())
         throw std::exception("vector size not equal to number of nodes in graph");
 
     for (const Arch& arc : arches)
@@ -37,7 +37,7 @@ bool Graph::IsSolution(const Individual& individ) const
     return true;
 }
 
-int Graph::GetNumberOfNotVerifiedArch(const Individual& individ) const
+int Graph::GetNumberOfNotVerifiedArch(const std::vector<bool>& individ) const
 {
     int count{ 0 };
     for (const Arch& arc : arches)
@@ -64,17 +64,17 @@ int Graph::GetNumberOfArches() const
     return (int)arches.size();
 }
 
-Graph Graph::ReadGraphFromFile(const std::string& FilePath)
+Graph* Graph::ReadGraphFromFile(const std::string& FilePath)
 {
-    std::ifstream fin{ FilePathToGraph };
-    fin >> NodesNumber;
-    Graph graph{ NodesNumber };
+    std::ifstream fin{ AlgorithmData::FilePathToGraph };
+    fin >> AlgorithmData::NodesNumber;
+    Graph* graph = new Graph{ AlgorithmData::NodesNumber };
     int from{}, to{};
     while (fin >> from >> to)
     {
         try
         {
-            graph.AddArch(from, to);
+            graph->AddArch(from, to);
         }
         catch (std::exception ex)
         {

@@ -1,18 +1,29 @@
-inline int NodesNumber;
-inline int PopulationSize = 100;
-inline const int NumberOfIterations = 10;
-inline const double LambdaFitness = 7.5;
-inline const int IsSolutionPoints = 40;
-inline const int TourneySize = 4;
-inline const int PopulationAfterSelection = PopulationSize;
-inline const double MutationRate = 0.01;
-inline const double CrossOverParticipationRate = 0.5;
-inline const size_t NumberOfRuns = 1000;
-inline bool ElitismIsEnabled = true;
+#ifndef ALGORITHMDATA_H
+#define ALGORITHMDATA_H
+#pragma once
+#include <string>
 
-inline const std::string FilePathToGraph{ "intrare.txt" };
-inline const std::string FilePathToResults{ "iesire.txt" };
-inline const std::string FilePathToPopulation{ "population.txt" };
+class AlgorithmData
+{
+public:
+	static int NodesNumber;
+	static int PopulationSize;
+	static const int NumberOfIterations;
+	static const double LambdaFitness;
+	static const int IsSolutionPoints = 20;
+	static const int TourneySize = 4;
+	static const int PopulationAfterSelection;
+	static const double MutationRate;
+	static const double CrossOverParticipationRate;
+	static const size_t NumberOfRuns = 1000;
+	static const bool ElitismIsEnabled = true;
+
+	static const std::string FilePathToGraph;
+	static const std::string FilePathToResults;
+	static const std::string FilePathToPopulation;
+};
+#endif
+
 //best data values
 /*
 	daca modific TourneySize		=> (daca il micsorez) se exploreaza mai multe solutii

@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AlgorithmData.cpp" />
     <ClCompile Include="Arch.cpp" />
     <ClCompile Include="GeneticAlgorithmVertexCover.cpp" />
     <ClCompile Include="Graph.cpp" />
