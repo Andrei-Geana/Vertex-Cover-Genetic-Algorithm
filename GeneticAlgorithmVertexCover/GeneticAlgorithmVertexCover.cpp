@@ -66,7 +66,7 @@ int main()
         std::cout << std::endl;
         pop = basePopulation;
         //algo.SetPopulation(std::move(pop));
-       // algo.SavePopulationInFile();
+        //algo.SavePopulationInFile();
         algo.ReadPopulationFromFile();
         individual = algo.RunAlgorithm();
         auto score = individual.GetScore();

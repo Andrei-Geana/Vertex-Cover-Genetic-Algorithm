@@ -14,7 +14,7 @@ VertexCoverGeneticAlgorithm::VertexCoverGeneticAlgorithm(Graph* base)
 void VertexCoverGeneticAlgorithm::SetPopulation(ListOfIndividuals&& population)
 {
     this->population = std::move(population);
-    SavePopulationInFile();
+    //SavePopulationInFile();
 }
 
 //basic GetPopulation
@@ -244,6 +244,8 @@ ListOfPointersToIndividuals VertexCoverGeneticAlgorithm::GetIndividualsForCrossO
 
 void VertexCoverGeneticAlgorithm::CrossOverPopulationForSelectedIndividuals(const ListOfPointersToIndividuals& selectedForCrossOver)
 {
+    if (selectedForCrossOver.empty())
+        return;
     //make crossover
     for (size_t index{ 0u }; index < selectedForCrossOver.size() - 1; index += 2u)
     {
